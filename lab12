@@ -6,7 +6,7 @@ X = []
 Y = []
 
 k = 0
-for line in open('1.csv'):
+for line in open('Dodgers Loop Sensor Data Set.csv'):
     x, y = line.split(';')
     X.append(k)
     Y.append(float(y))
