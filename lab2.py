@@ -5,12 +5,14 @@ import matplotlib.pyplot as plt
 X = []
 Y = []
 
-k = 0
-for line in open('Dodgers Loop Sensor Data Set.csv'):
-    x, y = line.split(';')
-    X.append(k)
+
+
+for line in open('India GDP from 1961 to 2017.csv'):
+    x, y = line.split(',')
+    X.append(int(x))
     Y.append(float(y))
-    k += 1
+
+
 
 X = np.array(X)
 Y = np.array(Y)
