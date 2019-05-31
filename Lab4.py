@@ -4,78 +4,69 @@ import numpy as np
 def MSE(y, Y):
     return np.mean((y - Y) ** 2)
 
-class PartyNN(object):
 
-        def __init__(self, learning_rate=0.1):
-            self.weights_0_1 = np.random.normal(0.0, 2 ** -0.5, (2, 3))
-            self.weights_1_2 = np.random.normal(0.0, 1, (1, 2))
-            self.sigmoid_mapper = np.vectorize(self.sigmoid)
-            self.learning_rate = np.array([learning_rate])
+class Neuro():
+    def __init__(self, learning_rate):
+        self.weight_1 = np.random.normal(0.0, 1, (2, 4))
+        self.weight_2 = np.random.normal(0.0, 1, (4, 1))
+        self.learning_rate = learning_rate
 
-        def sigmoid(self, x):
-            return 1 / (1 + np.exp(-x))
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
 
-        def predict(self, inputs):
-            inputs_1 = np.dot(self.weights_0_1, inputs)
-            outputs_1 = self.sigmoid_mapper(inputs_1)
+    def predict(self, inputs):
+        input_1 = inputs.dot(self.weight_1)
+        output_1 = np.array([self.sigmoid(x) for x in input_1])
 
-            inputs_2 = np.dot(self.weights_1_2, outputs_1)
-            outputs_2 = self.sigmoid_mapper(inputs_2)
-            return outputs_2
+        input_2 = output_1.dot(self.weight_2)
+        output_2 = np.array([self.sigmoid(x) for x in input_2])
 
-        def train(self, inputs, expected_predict):
-            inputs_1 = np.dot(self.weights_0_1, inputs)
-            outputs_1 = self.sigmoid_mapper(inputs_1)
+        return output_2
 
-            inputs_2 = np.dot(self.weights_1_2, outputs_1)
-            outputs_2 = self.sigmoid_mapper(inputs_2)
-            actual_predict = outputs_2[0]
+    def train(self, inputs, excepted):
+        input_1 = inputs.dot(self.weight_1)
+        output_1 = np.array([self.sigmoid(x) for x in input_1])
 
-            error_layer_2 = np.array([actual_predict - expected_predict])
-            gradient_layer_2 = actual_predict * (1 - actual_predict)
-            weights_delta_layer_2 = error_layer_2 * gradient_layer_2
-            self.weights_1_2 -= (np.dot(weights_delta_layer_2, outputs_1.reshape(1, len(outputs_1)))) * self.learning_rate
+        input_2 = output_1.dot(self.weight_2)
+        output_2 = np.array([self.sigmoid(x) for x in input_2])
 
-            error_layer_1 = weights_delta_layer_2 * self.weights_1_2
-            gradient_layer_1 = outputs_1 * (1 - outputs_1)
-            weights_delta_layer_1 = error_layer_1 * gradient_layer_1
-            self.weights_0_1 -= np.dot(inputs.reshape(len(inputs), 1), weights_delta_layer_1).T * self.learning_rate
+        error = np.array([output_2[0] - excepted])
+        dx = output_2[0] * (1 - output_2[0])
+        weights_delta = error * dx
+        self.weight_2 = self.weight_2 - output_1.reshape(1, len(output_1)).T * weights_delta * self.learning_rate
 
+        error = self.weight_2 * weights_delta
+        dx = output_1.reshape(len(output_1), 1) * (1 - output_1.reshape(len(output_1), 1))
+        weights_delta = error * dx
+        self.weight_1 = self.weight_1 - inputs.reshape(len(inputs), 1).dot(weights_delta.T) * self.learning_rate
 
 
 train = [
-        ([0, 0, 0], 0),
-        ([0, 0, 1], 1),
-        ([0, 1, 0], 0),
-        ([0, 1, 1], 0),
-        ([1, 0, 0], 1),
-        ([1, 0, 1], 1),
-        ([1, 1, 0], 0),
-        ([1, 1, 1], 0),
-    ]
+    ([0, 0], 0),
+    ([0, 1], 1),
+    ([1, 0], 1),
+    ([1, 1], 0),
+]
 
-epochs = 500
-learning_rate = 0.05
+epochs = 20000
 
-
-network = PartyNN(learning_rate=learning_rate)
+neuro = Neuro(learning_rate=0.05)
 
 for e in range(epochs):
-    inputs_ = []
-    correct_predictions = []
-    for input_stat, correct_predict in train:
-            network.train(np.array(input_stat), correct_predict)
-            inputs_.append(np.array(input_stat))
-            correct_predictions.append(np.array(correct_predict))
+    _data = []
+    _answers = []
+    for data, excepted in train:
+        neuro.train(np.array(data), excepted)
+        _data.append(np.array(data))
+        _answers.append(np.array(excepted))
 
-    train_loss = MSE(network.predict(np.array(inputs_).T), np.array(correct_predictions))
+    train_loss = MSE(neuro.predict(np.array(_data)).T, np.array(_answers))
     print(train_loss)
 
 print("results:")
 for data, excepted in train:
-    print(network.predict(np.array(data)), "~", excepted)
+    print(neuro.predict(np.array(data)), "~", excepted)
 
 print("weights:")
-print(network.weights_0_1)
-print(network.weights_1_2)
-
+print(neuro.weight_1)
+print(neuro.weight_2)
